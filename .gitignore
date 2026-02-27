@@ -1,2 +1,5 @@
 node_modules
 .env
+git remote add origin https://github.com/VillafuerteJonathan/Backendligaappv2.git
+
+https://github.com/tuusuario/nuevo-backend.git
