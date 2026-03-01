@@ -4,7 +4,8 @@ import path from "path";
 import { keccak256, toUtf8Bytes } from "ethers";
 
 import fs from "fs";
-import { calcularHash,  registrarActaBlockchain } from "../../blockchain/hash.util.js";
+import { calcularHash } from "../../blockchain/hash.util.js";
+import { registrarActaBlockchain } from "../../blockchain/actasBlockchain.service.js";
 import { rutaRelativaUploads } from "../../../utils/paths.js";
 
 
