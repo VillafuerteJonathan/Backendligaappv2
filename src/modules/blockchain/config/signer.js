@@ -4,6 +4,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const provider = new ethers.JsonRpcProvider(NETWORK.rpcUrl);
-const signer = new Wallet(process.env.BLOCKCHAIN_PRIVATE_KEY, provider);
+const signer = new Wallet(process.env.PRIVATE_KEY, provider);
 
 export { signer, provider };
