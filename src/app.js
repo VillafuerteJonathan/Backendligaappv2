@@ -11,6 +11,7 @@ import gruposRoutes from "./modules/campeonatos/grupos/grupos.router.js";
 import campeonatosRoutes from "./modules/campeonatos/torneo/campeonato.router.js";
 import partidosRoutes from "./modules/movil/partidos/partido.routes.js";
 import posicionesRouter from "./modules/principal/posiciones/posiciones.routes.js";
+import registrarRouter from "./modules/movil/registrar/registro.router.js";
 
 import path from "path"
 import cors from "cors";
@@ -34,6 +35,7 @@ app.use('/api/grupos', gruposRoutes);
 app.use('/api/campeonatos', campeonatosRoutes);
 app.use('/api/partidos', partidosRoutes);
 app.use("/api/posiciones", posicionesRouter);
+app.use("/api/registro", registrarRouter);
 
 
 app.use(
