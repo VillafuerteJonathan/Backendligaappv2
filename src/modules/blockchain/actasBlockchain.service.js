@@ -1,4 +1,4 @@
-import { actasContract } from "../contracts/ActasPartidos.contract.js";
+import { actasContract } from "../blockchain/contracts/ActasPartidos.contract.js";
 import { keccak256, toUtf8Bytes } from "ethers";
 
 /**
