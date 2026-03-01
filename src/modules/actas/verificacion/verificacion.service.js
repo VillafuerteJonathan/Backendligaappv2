@@ -1,5 +1,5 @@
 import pool from "../../../config/db.js";
-import { obtenerActaBlockchain } from "../../blockchain/index.js";
+import { obtenerActaBlockchain } from "../../blockchain/actasBlockchain.service.js";
 
 /**
  * 🔍 Campeonatos con actas pendientes
