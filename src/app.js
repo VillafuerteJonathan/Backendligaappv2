@@ -13,6 +13,7 @@ import partidosRoutes from "./modules/movil/partidos/partido.routes.js";
 import posicionesRouter from "./modules/principal/posiciones/posiciones.routes.js";
 import verificarRouter from "./modules/actas/verificacion/verificacion.routes.js";
 import registrarRouter from "./modules/movil/registrar/registro.router.js";
+import juegoRouter from "./modules/principal/jugados/juegos.routes.js";
 
 import path from "path"
 import cors from "cors";
@@ -38,6 +39,7 @@ app.use('/api/partidos', partidosRoutes);
 app.use("/api/posiciones", posicionesRouter);
 app.use("/api/registro", registrarRouter);
 app.use("/api/verificacion", verificarRouter);
+app.use("/api/juegos", juegoRouter);
 
 
 
