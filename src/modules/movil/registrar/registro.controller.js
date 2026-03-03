@@ -14,6 +14,84 @@ import { rutaRelativaUploads } from "../../../utils/paths.js";
 
 class RegistroController {
 
+// ===============================
+// REGISTRAR INASISTENCIA
+// ===============================
+// ===============================
+// REGISTRAR INASISTENCIA (con blockchain)
+// ===============================
+async registrarInasistencia(req, res) {
+  const { id } = req.params;
+  const { equipoQueNoAsistio, arbitroId, vocalId } = req.body;
+
+  if (!isUUID(id)) {
+    return res.status(400).json({ message: "ID de partido inválido" });
+  }
+  if (!equipoQueNoAsistio || !['local', 'visitante'].includes(equipoQueNoAsistio)) {
+    return res.status(400).json({ success: false, message: "equipoQueNoAsistio debe ser 'local' o 'visitante'" });
+  }
+  if (!arbitroId || !isUUID(arbitroId)) {
+    return res.status(400).json({ success: false, message: "Árbitro inválido" });
+  }
+  if (!vocalId || !isUUID(vocalId)) {
+    return res.status(400).json({ success: false, message: "Vocal inválido" });
+  }
+
+  // 📁 Verificar que existan las actas subidas previamente
+  const actaDir = path.join(process.cwd(), "uploads", "actas", id);
+  const frentePath = path.join(actaDir, "frente.jpg");
+  const dorsoPath = path.join(actaDir, "dorso.jpg");
+
+  if (!fs.existsSync(frentePath) || !fs.existsSync(dorsoPath)) {
+    return res.status(400).json({
+      success: false,
+      message: "No se puede registrar inasistencia sin acta frente y dorso"
+    });
+  }
+
+  try {
+    // 🔐 Calcular hash real de las actas
+    const hashActa = await calcularHash(frentePath, dorsoPath);
+    console.log("🔐 HASH ACTA (inasistencia):", hashActa);
+
+    // 1️⃣ Guardar en base de datos local (partido + actas_blockchain)
+    const resultado = await RegistroService.registrarInasistencia({
+      partidoId: id,
+      equipoQueNoAsistio,
+      arbitroId,
+      vocalId,
+      hashActa
+    });
+
+    // 2️⃣ Calcular marcador para blockchain
+    const golesLocal = equipoQueNoAsistio === 'local' ? 0 : 3;
+    const golesVisitante = equipoQueNoAsistio === 'visitante' ? 0 : 3;
+
+    // 3️⃣ Registrar en blockchain
+    const tx = await registrarActaBlockchain({
+      idPartido: id,
+      hashActa,
+      arbitroId,
+      vocalId,
+      golesLocal,
+      golesVisitante
+    });
+    console.log("✅ TX Blockchain (inasistencia):", tx.txHash);
+
+    return res.status(200).json({
+      success: true,
+      message: resultado.message,
+      txHash: tx.txHash
+    });
+
+  } catch (error) {
+    console.error("❌ Error registrar inasistencia:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
   // ===============================
   // DETALLE PARTIDO
   // ===============================

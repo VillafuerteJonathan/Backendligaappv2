@@ -2,6 +2,7 @@ import db from '../../../config/db.js';
 
 class RegistroService {
 
+
   // ===============================
   // DETALLE INICIAL DEL PARTIDO
   // ===============================
@@ -107,6 +108,88 @@ class RegistroService {
       throw new Error('No se puede actualizar el marcador');
     }
   }
+  async registrarInasistencia({
+  partidoId,
+  equipoQueNoAsistio, // 'local' o 'visitante'
+  arbitroId,
+  vocalId,
+  hashActa
+}) {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Validar que no exista acta previa
+    const existeActa = await client.query(
+      `SELECT 1 FROM actas_blockchain WHERE id_partido = $1`,
+      [partidoId]
+    );
+    if (existeActa.rowCount > 0) {
+      throw new Error('Este partido ya tiene un acta registrada');
+    }
+
+    const partidoRes = await client.query(
+      `SELECT id_partido, estado, equipo_local, equipo_visitante
+       FROM partidos
+       WHERE id_partido = $1`,
+      [partidoId]
+    );
+
+    if (partidoRes.rowCount === 0) {
+      throw new Error('Partido no encontrado');
+    }
+
+    const partido = partidoRes.rows[0];
+    if (partido.estado === 'finalizado') {
+      throw new Error('El partido ya está finalizado');
+    }
+
+    const esLocalNoAsiste = equipoQueNoAsistio === 'local';
+    // ✅ Marcador 3-0 a favor del equipo presente
+    const golesLocal = esLocalNoAsiste ? 0 : 3;
+    const golesVisitante = esLocalNoAsiste ? 3 : 0;
+
+    const idEquipoNoAsistio = esLocalNoAsiste ? partido.equipo_local : partido.equipo_visitante;
+
+    // Actualizar partido (permitimos que se pueda hacer desde 'pendiente')
+    const updateResult = await client.query(
+      `UPDATE partidos
+       SET goles_local = $1,
+           goles_visitante = $2,
+           estado = 'finalizado',
+           inasistencia = $3
+       WHERE id_partido = $4
+         AND estado != 'finalizado'
+       RETURNING id_partido`,
+      [golesLocal, golesVisitante, idEquipoNoAsistio, partidoId]
+    );
+
+    if (updateResult.rowCount === 0) {
+      throw new Error('No se pudo finalizar el partido (quizás ya estaba finalizado)');
+    }
+
+    // Insertar en actas_blockchain
+    await client.query(
+      `INSERT INTO actas_blockchain (
+          id_partido,
+          hash_acta,
+          vocal_id,
+          arbitro_id
+        )
+        VALUES ($1, $2, $3, $4)`,
+      [partidoId, hashActa, vocalId, arbitroId]
+    );
+
+    await client.query('COMMIT');
+    return { message: 'Inasistencia registrada correctamente' };
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
   // ===============================
   // FINALIZAR PARTIDO (TRANSACCIÓN REAL)

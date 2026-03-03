@@ -54,6 +54,11 @@ router.put(
   RegistroController.finalizarPartido
 
 );
+
+router.put(
+  "/partidos/:id/inasistencia",
+  RegistroController.registrarInasistencia
+);
 // Actualizar fecha/hora del encuentro
 router.put('/partidos/:id/actualizar-encuentro', RegistroController.actualizarEncuentro);
 
