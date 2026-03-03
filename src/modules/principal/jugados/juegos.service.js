@@ -3,7 +3,7 @@ import db from '../../../config/db.js';
 class JuegosService {
 
   // ===============================
-  // OBTENER FECHA LÍMITE (últimos 3 días desde la fecha más reciente)
+  // OBTENER FECHA LÍMITE
   // ===============================
   async obtenerFechaLimite() {
     const result = await db.query(`
@@ -26,9 +26,15 @@ class JuegosService {
         p.id_partido,
         p.fecha_encuentro,
         p.hora_encuentro,
+
         el.nombre AS local,
+        el.logo_url AS local_logo,
+
         ev.nombre AS visitante,
+        ev.logo_url AS visitante_logo,
+
         c.nombre AS cancha
+
       FROM partidos p
       JOIN equipos el ON el.id_equipo = p.equipo_local
       JOIN equipos ev ON ev.id_equipo = p.equipo_visitante
@@ -54,8 +60,13 @@ class JuegosService {
         p.id_partido,
         p.goles_local,
         p.goles_visitante,
+
         el.nombre AS local,
-        ev.nombre AS visitante
+        el.logo_url AS local_logo,
+
+        ev.nombre AS visitante,
+        ev.logo_url AS visitante_logo
+
       FROM partidos p
       JOIN equipos el ON el.id_equipo = p.equipo_local
       JOIN equipos ev ON ev.id_equipo = p.equipo_visitante
@@ -68,7 +79,7 @@ class JuegosService {
   }
 
   // ===============================
-  // PARTIDOS JUGADOS (acta revisada)
+  // PARTIDOS JUGADOS
   // ===============================
   async obtenerJugados() {
     const fechaLimite = await this.obtenerFechaLimite();
@@ -79,8 +90,13 @@ class JuegosService {
         p.goles_local,
         p.goles_visitante,
         p.fecha_encuentro,
+
         el.nombre AS local,
-        ev.nombre AS visitante
+        el.logo_url AS local_logo,
+
+        ev.nombre AS visitante,
+        ev.logo_url AS visitante_logo
+
       FROM partidos p
       JOIN equipos el ON el.id_equipo = p.equipo_local
       JOIN equipos ev ON ev.id_equipo = p.equipo_visitante
@@ -94,7 +110,7 @@ class JuegosService {
   }
 
   // ===============================
-  // OBTENER TODO AGRUPADO
+  // DASHBOARD COMPLETO
   // ===============================
   async obtenerDashboard() {
     const [porJugar, enJuego, jugados] = await Promise.all([
