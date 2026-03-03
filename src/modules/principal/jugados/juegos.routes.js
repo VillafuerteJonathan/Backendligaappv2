@@ -8,7 +8,7 @@ const router = Router();
  * 📊 Campeonatos activos + grupos + tabla de posiciones
  */
 router.get(
-  "/juegos",
+  "/listar",
   ListaJuegosController.listarJuegos
 );
 
