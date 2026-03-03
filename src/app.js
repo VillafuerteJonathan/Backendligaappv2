@@ -14,6 +14,7 @@ import posicionesRouter from "./modules/principal/posiciones/posiciones.routes.j
 import verificarRouter from "./modules/actas/verificacion/verificacion.routes.js";
 import registrarRouter from "./modules/movil/registrar/registro.router.js";
 import juegoRouter from "./modules/principal/jugados/juegos.routes.js";
+import consultaRouter from "./modules/actas/consulta/consulta.routes.js";
 
 import path from "path"
 import cors from "cors";
@@ -40,6 +41,7 @@ app.use("/api/posiciones", posicionesRouter);
 app.use("/api/registro", registrarRouter);
 app.use("/api/verificacion", verificarRouter);
 app.use("/api/juegos", juegoRouter);
+app.use("/api/consulta", consultaRouter);
 
 
 
