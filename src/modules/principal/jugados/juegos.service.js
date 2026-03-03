@@ -85,7 +85,7 @@ class JuegosService {
       JOIN equipos el ON el.id_equipo = p.equipo_local
       JOIN equipos ev ON ev.id_equipo = p.equipo_visitante
       WHERE p.estado = 'finalizado'
-        AND p.estado_acta = 'revisado'
+        AND p.estado_acta = 'revisada'
         AND p.fecha_encuentro >= $1
       ORDER BY p.fecha_encuentro DESC
     `, [fechaLimite]);
