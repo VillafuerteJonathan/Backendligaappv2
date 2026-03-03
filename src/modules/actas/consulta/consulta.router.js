@@ -5,7 +5,7 @@ import { ConsultaController } from "./consulta.controller.js";
 
 const router = Router();
 
-router.get("/campeonatos", ConsultaController.listarCampeonatos);
-router.get("/campeonatos/:id/partidos", ConsultaController.listarPartidosPorCampeonato);
+router.get("/listar", ConsultaController.listarCampeonatos);
+router.get("/listar/:id/partidos", ConsultaController.listarPartidosPorCampeonato);
 
 export default router;
