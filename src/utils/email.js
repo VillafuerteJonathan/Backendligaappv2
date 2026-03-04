@@ -20,10 +20,14 @@ export async function sendEmail({ to, subject, text, html }) {
 
     const data = await response.json();
 
+    console.log("STATUS:", response.status);
+    console.log("RESPUESTA BREVO:", data);
+
     if (!response.ok) {
       throw new Error(data.message || "No se pudo enviar el correo");
     }
 
+    console.log("Correo enviado correctamente ✅");
     return data;
 
   } catch (error) {
