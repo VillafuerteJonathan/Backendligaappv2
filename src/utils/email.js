@@ -1,28 +1,33 @@
-import nodemailer from "nodemailer";
-import dns from "dns";
-
-// 👇 Fuerza IPv4 (evita problema con Gmail en Render)
-dns.setDefaultResultOrder("ipv4first");
-
 export async function sendEmail({ to, subject, text, html }) {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,          // 👈 cambiar a 587
-    secure: false,      // 👈 false para 587
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": process.env.BREVO_API_KEY?.trim(), // 👈 importante
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "Liga Deportiva de Picaíhua",
+          email: process.env.BREVO_SENDER_EMAIL, // 👈 usar variable específica
+        },
+        to: [{ email: to }],
+        subject: subject,
+        textContent: text || "",
+        htmlContent: html || "",
+      }),
+    });
 
-  return transporter.sendMail({
-    from: `"Liga Deportiva de Picaíhua" <${process.env.GMAIL_USER}>`,
-    to,
-    subject,
-    text,
-    html,
-  });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "No se pudo enviar el correo");
+    }
+
+    return data;
+
+  } catch (error) {
+    console.error("Error enviando correo:", error.message);
+    throw error;
+  }
 }
