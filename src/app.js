@@ -50,4 +50,19 @@ app.use(
   express.static(path.join(process.cwd(), "uploads"))
 );
 
+app.get("/test-email", async (req, res) => {
+  try {
+    await sendEmail({
+      to: "eduardovillaquis2@gmail.com",
+      subject: "Prueba Brevo",
+      text: "Correo de prueba",
+      html: "<h1>Correo de prueba</h1>",
+    });
+
+    res.send("Correo enviado");
+  } catch (error) {
+    res.send(error.message);
+  }
+});
+
 app.listen(3001, () => console.log("Servidor corriendo en puerto 3001"));
