@@ -15,7 +15,7 @@ import verificarRouter from "./modules/actas/verificacion/verificacion.routes.js
 import registrarRouter from "./modules/movil/registrar/registro.router.js";
 import juegoRouter from "./modules/principal/jugados/juegos.routes.js";
 import consultaRoutes from './modules/actas/consulta/consulta.router.js';
-import { sendEmail } from "./utils/email.js";
+
 import path from "path"
 import cors from "cors";
 
@@ -50,19 +50,6 @@ app.use(
   express.static(path.join(process.cwd(), "uploads"))
 );
 
-app.get("/test-email", async (req, res) => {
-  try {
-    await sendEmail({
-      to: "eduardovillaquis2@gmail.com",
-      subject: "Prueba Brevo",
-      text: "Correo de prueba",
-      html: "<h1>Correo de prueba</h1>",
-    });
 
-    res.send("Correo enviado");
-  } catch (error) {
-    res.send(error.message);
-  }
-});
 
 app.listen(3001, () => console.log("Servidor corriendo en puerto 3001"));
