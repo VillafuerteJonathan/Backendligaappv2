@@ -2,7 +2,7 @@
 import pool from '../../../config/db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendEmail } from '../../../utils/email.js'; // Gmail SMTP
+import { sendEmail } from '../../../utils/email.js'; // tu función Brevo
 
 export const DelegadosService = {
 
@@ -26,6 +26,10 @@ export const DelegadosService = {
   async crearDelegado(data) {
     const { nombre, apellido, cedula, correo, telefono } = data;
 
+    if (!correo) {
+      throw new Error("El correo del delegado es obligatorio");
+    }
+
     const rol = 'delegado';
     const estado = true;
 
@@ -33,6 +37,9 @@ export const DelegadosService = {
     const password = crypto.randomBytes(4).toString('hex');
     const password_hash = await bcrypt.hash(password, 10);
 
+    // -------------------------------
+    // INSERTAR EN LA BASE DE DATOS
+    // -------------------------------
     const res = await pool.query(
       `INSERT INTO usuarios
        (nombre, apellido, cedula, correo, telefono, rol, estado, password_hash)
@@ -43,8 +50,14 @@ export const DelegadosService = {
 
     const delegado = res.rows[0];
 
-    // 📧 Enviar correo
+    console.log(`✅ Delegado creado en DB: ${delegado.nombre} (${delegado.correo})`);
+
+    // -------------------------------
+    // ENVIAR CORREO
+    // -------------------------------
     try {
+      console.log("📨 Intentando enviar correo a:", correo);
+
       await sendEmail({
         to: correo,
         subject: 'Cuenta de Delegado - Liga Deportiva de Picaíhua',
@@ -60,9 +73,13 @@ Por favor cambia tu contraseña al iniciar sesión.`,
           <h3>Hola ${nombre}</h3>
           <p>Tu cuenta de <b>delegado</b> ha sido creada.</p>
           <p><b>Usuario:</b> ${correo}</p>
-          <p><b>Contraseña :</b> ${password}</p>
+          <p><b>Contraseña:</b> ${password}</p>
+          <p>Por favor cambia tu contraseña al iniciar sesión.</p>
         `
       });
+
+      console.log("✅ Correo enviado correctamente al delegado");
+
     } catch (error) {
       console.error('❌ Error enviando correo:', error);
     }
