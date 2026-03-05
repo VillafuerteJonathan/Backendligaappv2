@@ -1,5 +1,6 @@
-// src/modules/usuarios/delegados/delegados.controller.js
+// src/modules/usuarios/delegados/vocales.controller.js
 import { VocalesService } from './vocales.service.js';
+import { sendEmail } from '../../../utils/email.js';
 
 export const VocalController = {
 
@@ -9,33 +10,58 @@ export const VocalController = {
   async listar(req, res) {
     try {
       const vocales = await VocalesService.listarVocales();
-      res.json({
-        success: true,
-        data: vocales
-      });
+      res.json({ success: true, data: vocales });
     } catch (err) {
       console.error('Error al listar vocales:', err);
-      res.status(500).json({
-        success: false,
-        message: 'Error al listar vocales'
-      });
+      res.status(500).json({ success: false, message: 'Error al listar vocales' });
     }
   },
 
   // ===============================
-  // CREAR DELEGADO
+  // CREAR VOCAL
   // ===============================
   async crear(req, res) {
     try {
-      const vocal = await VocalesService.crearVocal(req.body);
-      res.status(201).json({
-        success: true,
-        data: vocal
-      });
+      // Crear vocal en DB
+      const { vocal, password } = await VocalesService.crearVocal(req.body);
+
+      // -------------------------------
+      // Enviar correo
+      // -------------------------------
+      try {
+        console.log("[CONTROLLER] Enviando correo a:", vocal.correo);
+
+        await sendEmail({
+          to: vocal.correo,
+          subject: 'Cuenta de Vocal - Liga Deportiva de Picaíhua',
+          text: `Hola ${vocal.nombre},
+
+Tu cuenta de vocal ha sido creada con exito.
+
+Usuario: ${vocal.correo}
+Contraseña : ${password}
+
+Esta contraseña es unica e intrasferible.`,
+          html: `
+            <h3>Hola ${vocal.nombre}</h3>
+            <p>Tu cuenta de <b>vocal</b> ha sido creada.</p>
+            <p><b>Usuario:</b> ${vocal.correo}</p>
+            <p><b>Contraseña:</b> ${password}</p>
+            <p>⚠️ Esta contraseña es única e intransferible , cualquier porblema comuniquese con departamento de sistemas.</p>
+          `
+        });
+
+        console.log("[CONTROLLER] Correo enviado correctamente ✅");
+
+      } catch (emailError) {
+        console.error("[CONTROLLER] ❌ Error enviando correo:", emailError.message);
+      }
+
+      res.status(201).json({ success: true, data: vocal });
+
     } catch (err) {
       console.error('Error al crear vocal:', err);
 
-      // Error de duplicidad (correo o cédula)
       if (err.code === '23505') {
         return res.status(409).json({
           success: false,
@@ -51,93 +77,45 @@ export const VocalController = {
   },
 
   // ===============================
-  // ACTUALIZAR VOCALES
+  // ACTUALIZAR, HABILITAR, DESHABILITAR, ELIMINAR
   // ===============================
   async actualizar(req, res) {
     try {
-      const vocal = await VocalesService.actualizarVocal(
-        req.params.id,
-        req.body
-      );
-
-      res.json({
-        success: true,
-        data: vocal
-      });
+      const vocal = await VocalesService.actualizarVocal(req.params.id, req.body);
+      res.json({ success: true, data: vocal });
     } catch (err) {
       console.error('Error al actualizar vocal:', err);
-
-      if (err.code === '23505') {
-        return res.status(409).json({
-          success: false,
-          message: 'La cédula o el correo ya están registrados'
-        });
-      }
-
-      res.status(400).json({
-        success: false,
-        message: err.message || 'Error al actualizar delegado'
-      });
+      res.status(400).json({ success: false, message: err.message || 'Error al actualizar vocal' });
     }
   },
 
-  // ===============================
-  // HABILITAR VOCAL
-  // ===============================
   async habilitar(req, res) {
     try {
       const vocal = await VocalesService.habilitarVocal(req.params.id);
-      res.json({
-        success: true,
-        data: vocal,
-        message: 'Vocal habilitado correctamente'
-      });
+      res.json({ success: true, data: vocal, message: 'Vocal habilitado correctamente' });
     } catch (err) {
       console.error('Error al habilitar vocal:', err);
-      res.status(400).json({
-        success: false,
-        message: err.message || 'Error al habilitar vocal'
-      });
+      res.status(400).json({ success: false, message: err.message || 'Error al habilitar vocal' });
     }
   },
 
-  // ===============================
-  // DESHABILITAR VOCAL
-  // ===============================
   async deshabilitar(req, res) {
     try {
       const vocal = await VocalesService.deshabilitarVocal(req.params.id);
-      res.json({
-        success: true,
-        data: vocal,
-        message: 'Vocal deshabilitado correctamente'
-      });
+      res.json({ success: true, data: vocal, message: 'Vocal deshabilitado correctamente' });
     } catch (err) {
       console.error('Error al deshabilitar vocal:', err);
-      res.status(400).json({
-        success: false,
-        message: err.message || 'Error al deshabilitar vocal'
-      });
+      res.status(400).json({ success: false, message: err.message || 'Error al deshabilitar vocal' });
     }
   },
 
-  // ===============================
-  // ELIMINAR DELEGADO (SOFT DELETE)
-  // ===============================
   async eliminar(req, res) {
     try {
       await VocalesService.eliminarVocal(req.params.id);
-      res.json({
-        success: true,
-        message: 'Vocal eliminado correctamente'
-      });
+      res.json({ success: true, message: 'Vocal eliminado correctamente' });
     } catch (err) {
       console.error('Error al eliminar vocal:', err);
-      res.status(400).json({
-        success: false,
-        message: err.message || 'Error al eliminar vocal'
-      });
+      res.status(400).json({ success: false, message: err.message || 'Error al eliminar vocal' });
     }
   }
-
 };

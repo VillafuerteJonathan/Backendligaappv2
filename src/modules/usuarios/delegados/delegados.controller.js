@@ -44,10 +44,10 @@ Contraseña temporal: ${password}
 Por favor cambia tu contraseña al iniciar sesión.`,
           html: `
             <h3>Hola ${delegado.nombre}</h3>
-            <p>Tu cuenta de <b>delegado</b> ha sido creada.</p>
+            <p>Tu cuenta de <b>delegado</b> ha sido creada con exito.</p>
             <p><b>Usuario:</b> ${delegado.correo}</p>
             <p><b>Contraseña:</b> ${password}</p>
-            <p>Por favor cambia tu contraseña al iniciar sesión.</p>
+            <p>⚠️ Esta contraseña es única e intransferible , cualquier porblema comuniquese con departamento de sistemas</p>
           `
         });
 

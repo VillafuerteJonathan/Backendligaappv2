@@ -1,8 +1,7 @@
-// src/modules/usuarios/delegados/delegados.service.js
+// src/modules/usuarios/delegados/vocales.service.js
 import pool from '../../../config/db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendEmail } from '../../../utils/email.js'; // Gmail SMTP
 
 export const VocalesService = {
 
@@ -26,6 +25,10 @@ export const VocalesService = {
   async crearVocal(data) {
     const { nombre, apellido, cedula, correo, telefono } = data;
 
+    if (!correo) {
+      throw new Error("El correo del vocal es obligatorio");
+    }
+
     const rol = 'vocal';
     const estado = true;
 
@@ -33,6 +36,9 @@ export const VocalesService = {
     const password = crypto.randomBytes(4).toString('hex');
     const password_hash = await bcrypt.hash(password, 10);
 
+    // -------------------------------
+    // INSERTAR EN LA BASE DE DATOS
+    // -------------------------------
     const res = await pool.query(
       `INSERT INTO usuarios
        (nombre, apellido, cedula, correo, telefono, rol, estado, password_hash)
@@ -43,32 +49,9 @@ export const VocalesService = {
 
     const vocal = res.rows[0];
 
-    // 📧 Enviar correo
-    try {
-      await sendEmail({
-        to: correo,
-        subject: 'Cuenta de Vocal - Liga Deportiva de Picaíhua',
-        text: `Hola ${nombre},
+    console.log(`✅ Vocal creado en DB: ${vocal.nombre} (${vocal.correo})`);
 
-Tu cuenta de vocal ha sido creada.
-
-Usuario: ${correo}
-Contraseña temporal: ${password}
-
-Por favor cambia tu contraseña al iniciar sesión.`,
-        html: `
-          <h3>Hola ${nombre}</h3>
-          <p>Tu cuenta de <b>delegado</b> ha sido creada.</p>
-          <p><b>Usuario:</b> ${correo}</p>
-          <p><b>Contraseña temporal:</b> ${password}</p>
-          <p>⚠️ Cambia tu contraseña al iniciar sesión.</p>
-        `
-      });
-    } catch (error) {
-      console.error('❌ Error enviando correo:', error);
-    }
-
-    return vocal;
+    return { vocal, password }; // retornamos password temporal para el controller
   },
 
   // ===============================
@@ -125,7 +108,7 @@ Por favor cambia tu contraseña al iniciar sesión.`,
     );
 
     if (res.rows.length === 0) {
-      throw new Error('Delegado no encontrado');
+      throw new Error('Vocal no encontrado');
     }
 
     return res.rows[0];
@@ -146,7 +129,7 @@ Por favor cambia tu contraseña al iniciar sesión.`,
     );
 
     if (res.rows.length === 0) {
-      throw new Error('Delegado no encontrado');
+      throw new Error('Vocal no encontrado');
     }
 
     return res.rows[0];
