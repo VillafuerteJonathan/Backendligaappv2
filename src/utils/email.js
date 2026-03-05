@@ -3,35 +3,36 @@ export async function sendEmail({ to, subject, text, html }) {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        "api-key": process.env.BREVO_API_KEY?.trim(), // 👈 importante
-        "Content-Type": "application/json",
+        "accept": "application/json",
+        "api-key": process.env.BREVO_API_KEY?.trim(),
+        "content-type": "application/json"
       },
       body: JSON.stringify({
         sender: {
           name: "Liga Deportiva de Picaíhua",
-          email: process.env.BREVO_SENDER_EMAIL, // 👈 usar variable específica
+          email: process.env.BREVO_SENDER_EMAIL
         },
         to: [{ email: to }],
         subject: subject,
         textContent: text || "",
-        htmlContent: html || "",
-      }),
+        htmlContent: html || ""
+      })
     });
 
     const data = await response.json();
 
     console.log("STATUS:", response.status);
-    console.log("RESPUESTA BREVO:", data);
+    console.log("BREVO RESPONSE:", data);
 
     if (!response.ok) {
-      throw new Error(data.message || "No se pudo enviar el correo");
+      throw new Error(data.message || "Error enviando correo");
     }
 
-    console.log("Correo enviado correctamente ✅");
+    console.log("📧 Correo enviado correctamente");
     return data;
 
   } catch (error) {
-    console.error("Error enviando correo:", error.message);
+    console.error("❌ Error enviando correo:", error.message);
     throw error;
   }
 }
