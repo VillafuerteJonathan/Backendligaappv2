@@ -30,7 +30,6 @@ class EquiposService {
   // VALIDAR SI SE PUEDE AGREGAR
   // ===============================
   static async puedeAgregarAGrupo(idEquipo, idCampeonato, idGrupo) {
-    console.log('[EquiposService] Validando equipo:', { idEquipo, idCampeonato, idGrupo });
 
     const equipo = await this.obtenerPorId(idEquipo);
     if (!equipo || !equipo.estado) {
@@ -75,7 +74,7 @@ class EquiposService {
   // AGREGAR EQUIPO A GRUPO
   // ===============================
   static async agregarAGrupo(idCampeonato, idGrupo, idEquipo) {
-    console.log('[EquiposService] Agregando equipo a grupo');
+
 
     await pool.query(
       `INSERT INTO grupo_equipos (id_campeonato, id_grupo, id_equipo)

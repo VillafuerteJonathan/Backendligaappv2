@@ -49,7 +49,6 @@ export const VocalesService = {
 
     const vocal = res.rows[0];
 
-    console.log(`✅ Vocal creado en DB: ${vocal.nombre} (${vocal.correo})`);
 
     return { vocal, password }; // retornamos password temporal para el controller
   },

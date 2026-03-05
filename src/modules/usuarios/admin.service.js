@@ -18,7 +18,7 @@ export const UsuarioService = {
     const res = await pool.query(`SELECT * FROM usuarios WHERE cedula=$1`, [cedula]);
 
     if (res.rows.length > 0) {
-      console.log('Administrador ya existe');
+     
       return res.rows[0];
     }
 
@@ -29,7 +29,7 @@ export const UsuarioService = {
       [nombre, apellido, cedula, correo, telefono, rol, password_hash]
     );
 
-    console.log('Administrador creado:', insert.rows[0]);
+    
     return insert.rows[0];
 
   } catch (error) {

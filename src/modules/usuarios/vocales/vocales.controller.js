@@ -29,7 +29,7 @@ export const VocalController = {
       // Enviar correo
       // -------------------------------
       try {
-        console.log("[CONTROLLER] Enviando correo a:", vocal.correo);
+      
 
         await sendEmail({
           to: vocal.correo,
@@ -51,7 +51,6 @@ Esta contraseña es unica e intrasferible.`,
           `
         });
 
-        console.log("[CONTROLLER] Correo enviado correctamente ✅");
 
       } catch (emailError) {
         console.error("[CONTROLLER] ❌ Error enviando correo:", emailError.message);

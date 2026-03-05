@@ -29,7 +29,7 @@ export const DelegadosController = {
       // Enviar correo
       // -------------------------------
       try {
-        console.log("[CONTROLLER] Enviando correo a:", delegado.correo);
+       
 
         await sendEmail({
           to: delegado.correo,
@@ -51,7 +51,7 @@ Por favor cambia tu contraseña al iniciar sesión.`,
           `
         });
 
-        console.log("[CONTROLLER] Correo enviado correctamente ✅");
+        
 
       } catch (emailError) {
         console.error("[CONTROLLER] ❌ Error enviando correo:", emailError.message);

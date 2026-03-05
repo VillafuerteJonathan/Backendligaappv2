@@ -11,9 +11,6 @@ class CampeonatosService {
     try {
       await client.query('BEGIN');
 
-      console.log('=== CREAR/ACTUALIZAR CAMPEONATO ===');
-      console.log('Datos recibidos:', JSON.stringify(data, null, 2));
-      console.log('ID Campeonato:', idCampeonato);
 
       let campeonato;
 
@@ -29,7 +26,6 @@ class CampeonatosService {
         );
         campeonato = insert.rows[0];
         idCampeonato = campeonato.id_campeonato;
-        console.log('Campeonato creado:', campeonato);
       }
       // =========================
       // ACTUALIZAR CAMPEONATO EXISTENTE
@@ -56,7 +52,7 @@ class CampeonatosService {
           [data.nombre, data.fecha_inicio, data.fecha_fin, idCampeonato]
         );
         campeonato = update.rows[0];
-        console.log('Campeonato actualizado:', campeonato);
+      
 
         // Eliminar relaciones anteriores
         await client.query(
@@ -74,10 +70,10 @@ class CampeonatosService {
       // PROCESAR GRUPOS Y EQUIPOS
       // =========================
       if (data.grupos && Array.isArray(data.grupos)) {
-        console.log('Procesando grupos:', data.grupos.length);
+       
         
         for (const grupoData of data.grupos) {
-          console.log('Procesando grupo:', grupoData);
+          
           
           let grupoId;
 
@@ -99,7 +95,7 @@ class CampeonatosService {
                 [grupoData.nombre]
               );
               grupoId = nuevoGrupo.rows[0].id_grupo;
-              console.log(`Grupo creado: ${grupoData.nombre} (ID: ${grupoId})`);
+            
             }
           } else {
             // Buscar grupo por nombre o crear nuevo
@@ -111,14 +107,14 @@ class CampeonatosService {
             
             if (grupoExistente.rows.length > 0) {
               grupoId = grupoExistente.rows[0].id_grupo;
-              console.log(`Grupo existente encontrado: ${grupoData.nombre} (ID: ${grupoId})`);
+             
             } else {
               const nuevoGrupo = await client.query(
                 `INSERT INTO grupo (nombre) VALUES ($1) RETURNING id_grupo`,
                 [grupoData.nombre]
               );
               grupoId = nuevoGrupo.rows[0].id_grupo;
-              console.log(`Nuevo grupo creado: ${grupoData.nombre} (ID: ${grupoId})`);
+             
             }
           }
 
@@ -132,7 +128,7 @@ class CampeonatosService {
 
           // Agregar equipos al grupo
           if (grupoData.equiposIds && Array.isArray(grupoData.equiposIds) && grupoData.equiposIds.length > 0) {
-            console.log(`Agregando ${grupoData.equiposIds.length} equipos al grupo ${grupoData.nombre}`);
+           
             
             // Verificar que los equipos existan y estén activos
             const placeholders = grupoData.equiposIds.map((_, i) => `$${i + 1}`).join(',');
@@ -144,7 +140,7 @@ class CampeonatosService {
               grupoData.equiposIds
             );
 
-            console.log(`Equipos válidos encontrados: ${equiposValidos.rows.length}`);
+           
 
             // Controlar categorías únicas por grupo
             for (const equipo of equiposValidos.rows) {
@@ -155,26 +151,17 @@ class CampeonatosService {
     [idCampeonato, grupoId, equipo.id_equipo]
   );
 
-  console.log(`Equipo ${equipo.id_equipo} agregado al grupo ${grupoId}`);
+  
 }
-}else {
-            console.log(`No hay equipos para agregar al grupo ${grupoData.nombre}`);
-          }
+}
         }
-      } else {
-        console.log('No hay grupos para procesar');
       }
 
       await client.query('COMMIT');
-      console.log('Transacción completada exitosamente');
+     
       
       // Obtener el campeonato con todos los detalles
       const campeonatoCompleto = await this.obtenerConDetalles(idCampeonato);
-      console.log('Campeonato completo para respuesta:', {
-        id: campeonatoCompleto?.id_campeonato,
-        nombre: campeonatoCompleto?.nombre,
-        grupos: campeonatoCompleto?.grupos?.length || 0
-      });
       
       return campeonatoCompleto;
 
@@ -193,7 +180,7 @@ class CampeonatosService {
   // ===============================
   static async obtenerTodos() {
     try {
-      console.log('=== OBTENIENDO TODOS LOS CAMPEONATOS ===');
+     
       
       const query = `
           SELECT 
@@ -216,7 +203,7 @@ class CampeonatosService {
         `;
       
       const res = await pool.query(query);
-      console.log(`Total campeonatos encontrados: ${res.rows.length}`);
+
       
       // Para cada campeonato, obtener sus grupos y equipos
       const campeonatosConDetalles = await Promise.all(
@@ -239,7 +226,7 @@ class CampeonatosService {
   // ===============================
   static async obtenerConDetalles(idCampeonato) {
     try {
-      console.log(`=== OBTENIENDO DETALLES PARA CAMPEONATO ${idCampeonato} ===`);
+    
       
       const query = `
         WITH grupos_campeonato AS (
@@ -286,27 +273,19 @@ class CampeonatosService {
         GROUP BY c.id_campeonato
       `;
       
-      console.log(`Ejecutando query para campeonato ${idCampeonato}`);
+      
       
       const result = await pool.query(query, [idCampeonato]);
       
       if (result.rows.length === 0) {
-        console.log(`Campeonato ${idCampeonato} no encontrado`);
+      
         return null;
       }
       
       const campeonato = result.rows[0];
       
-      console.log(`Campeonato encontrado:`, {
-        nombre: campeonato.nombre,
-        gruposCount: campeonato.grupos ? campeonato.grupos.length : 0,
-        equiposTotales: campeonato.grupos ? 
-          campeonato.grupos.reduce((total, grupo) => total + (grupo.equipos?.length || 0), 0) : 0
-      });
-      
       if (campeonato.grupos) {
         campeonato.grupos.forEach((grupo, index) => {
-          console.log(`  Grupo ${index + 1}: ${grupo.nombre}, Equipos: ${grupo.equipos?.length || 0}`);
         });
       }
       
@@ -327,7 +306,7 @@ class CampeonatosService {
     try {
       await client.query('BEGIN');
       
-      console.log(`=== ELIMINANDO CAMPEONATO ${idCampeonato} ===`);
+     
       
       // Verificar que el campeonato existe
       const existe = await client.query(
@@ -363,8 +342,7 @@ class CampeonatosService {
       await client.query('COMMIT');
       
       const campeonatoEliminado = result.rows[0];
-      console.log(`Campeonato eliminado: ${campeonatoEliminado.nombre} (ID: ${campeonatoEliminado.id_campeonato})`);
-      
+    
       return { 
         success: true, 
         message: `Campeonato "${campeonatoEliminado.nombre}" eliminado correctamente` 

@@ -52,7 +52,7 @@ async registrarInasistencia(req, res) {
   try {
     // 🔐 Calcular hash real de las actas
     const hashActa = await calcularHash(frentePath, dorsoPath);
-    console.log("🔐 HASH ACTA (inasistencia):", hashActa);
+ 
 
     // 1️⃣ Guardar en base de datos local (partido + actas_blockchain)
     const resultado = await RegistroService.registrarInasistencia({
@@ -76,7 +76,7 @@ async registrarInasistencia(req, res) {
       golesLocal,
       golesVisitante
     });
-    console.log("✅ TX Blockchain (inasistencia):", tx.txHash);
+   
 
     return res.status(200).json({
       success: true,
@@ -248,8 +248,6 @@ async finalizarPartido(req, res) {
     // 🔐 CALCULAR HASH REAL
     const hashActa = await calcularHash(frentePath, dorsoPath);
 
-    console.log("🔐 HASH ACTA:", hashActa);
-
     await RegistroService.finalizarPartido({
       partidoId: id,
       golesLocal,
@@ -268,9 +266,7 @@ async finalizarPartido(req, res) {
         golesLocal,
         golesVisitante
       });
-      console.log("ID PARTIDO:", id);
-    console.log("HASH PARTIDO:", keccak256(toUtf8Bytes(id)));
-
+    
 
       return res.status(200).json({
         success: true,

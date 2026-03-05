@@ -50,13 +50,11 @@ export const DelegadosService = {
 
     const delegado = res.rows[0];
 
-    console.log(`✅ Delegado creado en DB: ${delegado.nombre} (${delegado.correo})`);
-
     // -------------------------------
     // ENVIAR CORREO
     // -------------------------------
     try {
-      console.log("📨 Intentando enviar correo a:", correo);
+      
 
       await sendEmail({
         to: correo,
@@ -78,8 +76,7 @@ Por favor cambia tu contraseña al iniciar sesión.`,
         `
       });
 
-      console.log("✅ Correo enviado correctamente al delegado");
-
+ 
     } catch (error) {
       console.error('❌ Error enviando correo:', error);
     }
