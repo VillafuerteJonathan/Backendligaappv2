@@ -15,6 +15,7 @@ import verificarRouter from "./modules/actas/verificacion/verificacion.routes.js
 import registrarRouter from "./modules/movil/registrar/registro.router.js";
 import juegoRouter from "./modules/principal/jugados/juegos.routes.js";
 import consultaRoutes from './modules/actas/consulta/consulta.router.js';
+import { sendEmail } from "./utils/email.js";
 
 import path from "path"
 import cors from "cors";
