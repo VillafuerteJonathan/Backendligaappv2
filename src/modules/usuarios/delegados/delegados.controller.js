@@ -21,61 +21,81 @@ export const DelegadosController = {
   // CREAR DELEGADO
   // ===============================
   async crear(req, res) {
+  try {
+    const { delegado, password, reactivado } = await DelegadosService.crearDelegado(req.body);
+
+    // ======================================
+    // 📧 ENVÍO DE CORREO
+    // ======================================
     try {
-      // Crear delegado en DB
-      const { delegado, password } = await DelegadosService.crearDelegado(req.body);
+      const subject = reactivado
+        ? 'Cuenta Reactivada - Delegado - Liga Deportiva de Picaíhua'
+        : 'Cuenta de Delegado - Liga Deportiva de Picaíhua';
 
-      // -------------------------------
-      // Enviar correo
-      // -------------------------------
-      try {
-       
+      const text = reactivado
+        ? `Hola ${delegado.nombre},
 
-        await sendEmail({
-          to: delegado.correo,
-          subject: 'Cuenta de Delegado - Liga Deportiva de Picaíhua',
-          text: `Hola ${delegado.nombre},
+Tu cuenta ha sido reactivada.
+
+Usuario: ${delegado.correo}
+Nueva contraseña: ${password}
+
+Por favor cambia tu contraseña al iniciar sesión.`
+        : `Hola ${delegado.nombre},
 
 Tu cuenta de delegado ha sido creada.
 
 Usuario: ${delegado.correo}
 Contraseña temporal: ${password}
 
-Por favor cambia tu contraseña al iniciar sesión.`,
-          html: `
-            <h3>Hola ${delegado.nombre}</h3>
-            <p>Tu cuenta de <b>delegado</b> ha sido creada con exito.</p>
-            <p><b>Usuario:</b> ${delegado.correo}</p>
-            <p><b>Contraseña:</b> ${password}</p>
-            <p>⚠️ Esta contraseña es única e intransferible , cualquier porblema comuniquese con departamento de sistemas</p>
-          `
-        });
+Por favor cambia tu contraseña al iniciar sesión.`;
 
-        
+      const html = `
+        <h3>Hola ${delegado.nombre}</h3>
+        <p>${reactivado 
+          ? 'Tu cuenta ha sido <b>reactivada</b>' 
+          : 'Tu cuenta de <b>delegado</b> ha sido creada'}</p>
+        <p><b>Usuario:</b> ${delegado.correo}</p>
+        <p><b>Contraseña:</b> ${password}</p>
+        <p>⚠️ Por seguridad, cambia tu contraseña al iniciar sesión.</p>
+      `;
 
-      } catch (emailError) {
-        console.error("[CONTROLLER] ❌ Error enviando correo:", emailError.message);
-      }
+      await sendEmail({
+        to: delegado.correo,
+        subject,
+        text,
+        html
+      });
 
-      // Retornar delegado
-      res.status(201).json({ success: true, data: delegado });
+    } catch (emailError) {
+      console.error("[CONTROLLER] ❌ Error enviando correo:", emailError.message);
+    }
 
-    } catch (err) {
-      console.error('Error al crear delegado:', err);
+    // ======================================
+    // ✅ RESPUESTA
+    // ======================================
+    res.status(201).json({
+      success: true,
+      data: delegado,
+      reactivado
+    });
 
-      if (err.code === '23505') {
-        return res.status(409).json({
-          success: false,
-          message: 'La cédula o el correo ya están registrados'
-        });
-      }
+  } catch (err) {
+    console.error('Error al crear delegado:', err);
 
-      res.status(400).json({
+    if (err.code === '23505') {
+      return res.status(409).json({
         success: false,
-        message: err.message || 'Error al crear delegado'
+        message: 'La cédula o el correo ya están registrados'
       });
     }
-  },
+
+    res.status(400).json({
+      success: false,
+      message: err.message || 'Error al crear delegado'
+    });
+  }
+},
 
   // ===============================
   // ACTUALIZAR, HABILITAR, DESHABILITAR, ELIMINAR

@@ -17,46 +17,65 @@ export const VocalController = {
     }
   },
 
-  // ===============================
-  // CREAR VOCAL
-  // ===============================
   async crear(req, res) {
     try {
-      // Crear vocal en DB
-      const { vocal, password } = await VocalesService.crearVocal(req.body);
+      const { vocal, password, reactivado } = await VocalesService.crearVocal(req.body);
 
-      // -------------------------------
-      // Enviar correo
-      // -------------------------------
+      // ======================================
+      // 📧 ENVÍO DE CORREO
+      // ======================================
       try {
-      
+        const subject = reactivado
+          ? 'Cuenta Reactivada - Liga Deportiva de Picaíhua'
+          : 'Cuenta de Vocal - Liga Deportiva de Picaíhua';
+
+        const text = reactivado
+          ? `Hola ${vocal.nombre},
+
+              Tu cuenta ha sido reactivada.
+
+              Usuario: ${vocal.correo}
+              Nueva contraseña: ${password}
+
+              Por favor cambia tu contraseña al iniciar sesión.`
+          : `Hola ${vocal.nombre},
+
+              Tu cuenta de vocal ha sido creada con éxito.
+
+              Usuario: ${vocal.correo}
+              Contraseña: ${password}
+
+              Esta contraseña es única e intransferible.`;
+
+        const html = `
+        <h3>Hola ${vocal.nombre}</h3>
+        <p>${reactivado
+            ? 'Tu cuenta ha sido <b>reactivada</b>'
+            : 'Tu cuenta de <b>vocal</b> ha sido creada'}</p>
+        <p><b>Usuario:</b> ${vocal.correo}</p>
+        <p><b>Contraseña:</b> ${password}</p>
+        <p>⚠️ Por seguridad, cambia tu contraseña al iniciar sesión.</p>
+      `;
 
         await sendEmail({
           to: vocal.correo,
-          subject: 'Cuenta de Vocal - Liga Deportiva de Picaíhua',
-          text: `Hola ${vocal.nombre},
-
-Tu cuenta de vocal ha sido creada con exito.
-
-Usuario: ${vocal.correo}
-Contraseña : ${password}
-
-Esta contraseña es unica e intrasferible.`,
-          html: `
-            <h3>Hola ${vocal.nombre}</h3>
-            <p>Tu cuenta de <b>vocal</b> ha sido creada.</p>
-            <p><b>Usuario:</b> ${vocal.correo}</p>
-            <p><b>Contraseña:</b> ${password}</p>
-            <p>⚠️ Esta contraseña es única e intransferible , cualquier porblema comuniquese con departamento de sistemas.</p>
-          `
+          subject,
+          text,
+          html
         });
-
 
       } catch (emailError) {
         console.error("[CONTROLLER] ❌ Error enviando correo:", emailError.message);
       }
 
-      res.status(201).json({ success: true, data: vocal });
+      // ======================================
+      // ✅ RESPUESTA
+      // ======================================
+      res.status(201).json({
+        success: true,
+        data: vocal,
+        reactivado
+      });
 
     } catch (err) {
       console.error('Error al crear vocal:', err);

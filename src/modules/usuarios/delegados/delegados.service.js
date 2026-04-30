@@ -24,65 +24,75 @@ export const DelegadosService = {
   // CREAR DELEGADO
   // ===============================
   async crearDelegado(data) {
-    const { nombre, apellido, cedula, correo, telefono } = data;
+  const { nombre, apellido, cedula, correo, telefono } = data;
 
-    if (!correo) {
-      throw new Error("El correo del delegado es obligatorio");
+  if (!correo) {
+    throw new Error("El correo del delegado es obligatorio");
+  }
+
+  const rol = 'delegado';
+  const estado = true;
+
+  // 🔐 Generar contraseña aleatoria
+  const password = crypto.randomBytes(4).toString('hex');
+  const password_hash = await bcrypt.hash(password, 10);
+
+  // 🔍 Verificar si ya existe (por correo o cédula)
+  const existe = await pool.query(
+    `SELECT * FROM usuarios WHERE correo = $1 OR cedula = $2 LIMIT 1`,
+    [correo, cedula]
+  );
+
+  // ======================================
+  // 🔁 CASO: YA EXISTE
+  // ======================================
+  if (existe.rows.length > 0) {
+    const usuario = existe.rows[0];
+
+    // 👉 SI ESTÁ ELIMINADO → REACTIVAR
+    if (usuario.eliminado) {
+      const res = await pool.query(
+        `UPDATE usuarios
+         SET nombre=$1,
+             apellido=$2,
+             telefono=$3,
+             estado=$4,
+             eliminado=false,
+             password_hash=$5,
+             rol=$6
+         WHERE id_usuario=$7
+         RETURNING id_usuario, nombre, apellido, cedula, correo, telefono, rol, estado, fecha_registro`,
+        [nombre, apellido, telefono, estado, password_hash, rol, usuario.id_usuario]
+      );
+
+      return {
+        delegado: res.rows[0],
+        password,
+        reactivado: true
+      };
     }
 
-    const rol = 'delegado';
-    const estado = true;
+    // ❌ YA EXISTE Y ESTÁ ACTIVO
+    throw new Error("El usuario ya existe y está activo");
+  }
 
-    // 🔐 Generar contraseña aleatoria
-    const password = crypto.randomBytes(4).toString('hex');
-    const password_hash = await bcrypt.hash(password, 10);
+  // ======================================
+  // 🆕 CASO: NO EXISTE → INSERTAR
+  // ======================================
+  const res = await pool.query(
+    `INSERT INTO usuarios
+     (nombre, apellido, cedula, correo, telefono, rol, estado, password_hash)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+     RETURNING id_usuario, nombre, apellido, cedula, correo, telefono, rol, estado, fecha_registro`,
+    [nombre, apellido, cedula, correo, telefono, rol, estado, password_hash]
+  );
 
-    // -------------------------------
-    // INSERTAR EN LA BASE DE DATOS
-    // -------------------------------
-    const res = await pool.query(
-      `INSERT INTO usuarios
-       (nombre, apellido, cedula, correo, telefono, rol, estado, password_hash)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       RETURNING id_usuario, nombre, apellido, cedula, correo, telefono, rol, estado, fecha_registro`,
-      [nombre, apellido, cedula, correo, telefono, rol, estado, password_hash]
-    );
-
-    const delegado = res.rows[0];
-
-    // -------------------------------
-    // ENVIAR CORREO
-    // -------------------------------
-    try {
-      
-
-      await sendEmail({
-        to: correo,
-        subject: 'Cuenta de Delegado - Liga Deportiva de Picaíhua',
-        text: `Hola ${nombre},
-
-Tu cuenta de delegado ha sido creada.
-
-Usuario: ${correo}
-Contraseña temporal: ${password}
-
-Por favor cambia tu contraseña al iniciar sesión.`,
-        html: `
-          <h3>Hola ${nombre}</h3>
-          <p>Tu cuenta de <b>delegado</b> ha sido creada.</p>
-          <p><b>Usuario:</b> ${correo}</p>
-          <p><b>Contraseña:</b> ${password}</p>
-          <p>Por favor cambia tu contraseña al iniciar sesión.</p>
-        `
-      });
-
- 
-    } catch (error) {
-      console.error('❌ Error enviando correo:', error);
-    }
-
-    return delegado;
-  },
+  return {
+    delegado: res.rows[0],
+    password,
+    reactivado: false
+  };
+},
 
   // ===============================
   // ACTUALIZAR DELEGADO
