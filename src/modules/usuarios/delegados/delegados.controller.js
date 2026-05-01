@@ -17,17 +17,26 @@ export const DelegadosController = {
     }
   },
 
-  // ===============================
-  // CREAR DELEGADO
-  // ===============================
-  async crear(req, res) {
+ // ===============================
+// CREAR DELEGADO
+// ===============================
+async crear(req, res) {
+  console.log("🟡 [CONTROLLER] Iniciando crear delegado");
+  console.log("📥 Body recibido:", req.body);
+
   try {
     const { delegado, password, reactivado } = await DelegadosService.crearDelegado(req.body);
+
+    console.log("✅ [CONTROLLER] Delegado creado:", delegado);
+    console.log("🔐 Password generada:", password);
+    console.log("🔁 ¿Reactivado?:", reactivado);
 
     // ======================================
     // 📧 ENVÍO DE CORREO
     // ======================================
     try {
+      console.log("📧 Preparando envío de correo...");
+
       const subject = reactivado
         ? 'Cuenta Reactivada - Delegado - Liga Deportiva de Picaíhua'
         : 'Cuenta de Delegado - Liga Deportiva de Picaíhua';
@@ -60,15 +69,30 @@ Por favor cambia tu contraseña al iniciar sesión.`;
         <p>⚠️ Por seguridad, cambia tu contraseña al iniciar sesión.</p>
       `;
 
-      await sendEmail({
+      console.log("📨 Datos del correo:");
+      console.log("➡️ Para:", delegado.correo);
+      console.log("➡️ Asunto:", subject);
+
+      console.log("🌐 Variables de entorno:");
+      console.log("EMAIL_USER:", process.env.EMAIL_USER);
+      console.log("EMAIL_HOST:", process.env.EMAIL_HOST);
+      console.log("EMAIL_PORT:", process.env.EMAIL_PORT);
+
+      console.log("🚀 Enviando correo...");
+
+      const result = await sendEmail({
         to: delegado.correo,
         subject,
         text,
         html
       });
 
+      console.log("✅ Correo enviado correctamente:", result);
+
     } catch (emailError) {
-      console.error("[CONTROLLER] ❌ Error enviando correo:", emailError.message);
+      console.error("❌ [CONTROLLER] Error enviando correo:");
+      console.error("Mensaje:", emailError.message);
+      console.error("Stack:", emailError.stack);
     }
 
     // ======================================
@@ -81,7 +105,8 @@ Por favor cambia tu contraseña al iniciar sesión.`;
     });
 
   } catch (err) {
-    console.error('Error al crear delegado:', err);
+    console.error("🔥 [CONTROLLER] Error general:");
+    console.error(err);
 
     if (err.code === '23505') {
       return res.status(409).json({
