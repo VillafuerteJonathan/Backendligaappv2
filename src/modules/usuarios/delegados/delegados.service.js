@@ -23,77 +23,100 @@ export const DelegadosService = {
   // ===============================
   // CREAR DELEGADO
   // ===============================
-  async crearDelegado(data) {
+ async crearDelegado(data) {
+  console.log("🟡 [SERVICE] Iniciando crearDelegado");
+  console.log("📥 Data recibida:", data);
+
   const { nombre, apellido, cedula, correo, telefono } = data;
 
   if (!correo) {
+    console.log("❌ No se envió correo");
     throw new Error("El correo del delegado es obligatorio");
   }
 
   const rol = 'delegado';
   const estado = true;
 
-  // 🔐 Generar contraseña aleatoria
-  const password = crypto.randomBytes(4).toString('hex');
-  const password_hash = await bcrypt.hash(password, 10);
+  try {
+    // 🔐 Generar contraseña
+    const password = crypto.randomBytes(4).toString('hex');
+    const password_hash = await bcrypt.hash(password, 10);
 
-  // 🔍 Verificar si ya existe (por correo o cédula)
-  const existe = await pool.query(
-    `SELECT * FROM usuarios WHERE correo = $1 OR cedula = $2 LIMIT 1`,
-    [correo, cedula]
-  );
+    console.log("🔐 Password generada:", password);
 
-  // ======================================
-  // 🔁 CASO: YA EXISTE
-  // ======================================
-  if (existe.rows.length > 0) {
-    const usuario = existe.rows[0];
+    // 🔍 Verificar si ya existe
+    const existe = await pool.query(
+      `SELECT * FROM usuarios WHERE correo = $1 OR cedula = $2 LIMIT 1`,
+      [correo, cedula]
+    );
 
-    // 👉 SI ESTÁ ELIMINADO → REACTIVAR
-    if (usuario.eliminado) {
-      const res = await pool.query(
-        `UPDATE usuarios
-         SET nombre=$1,
-             apellido=$2,
-             telefono=$3,
-             estado=$4,
-             eliminado=false,
-             password_hash=$5,
-             rol=$6
-         WHERE id_usuario=$7
-         RETURNING id_usuario, nombre, apellido, cedula, correo, telefono, rol, estado, fecha_registro`,
-        [nombre, apellido, telefono, estado, password_hash, rol, usuario.id_usuario]
-      );
+    console.log("🔎 Resultado búsqueda usuario:", existe.rows.length);
 
-      return {
-        delegado: res.rows[0],
-        password,
-        reactivado: true
-      };
+    // ======================================
+    // 🔁 CASO: YA EXISTE
+    // ======================================
+    if (existe.rows.length > 0) {
+      const usuario = existe.rows[0];
+
+      console.log("⚠️ Usuario encontrado:", usuario);
+
+      // 👉 SI ESTÁ ELIMINADO → REACTIVAR
+      if (usuario.eliminado) {
+        console.log("🔄 Usuario eliminado → reactivando...");
+
+        const res = await pool.query(
+          `UPDATE usuarios
+           SET nombre=$1,
+               apellido=$2,
+               telefono=$3,
+               estado=$4,
+               eliminado=false,
+               password_hash=$5,
+               rol=$6
+           WHERE id_usuario=$7
+           RETURNING id_usuario, nombre, apellido, cedula, correo, telefono, rol, estado, fecha_registro`,
+          [nombre, apellido, telefono, estado, password_hash, rol, usuario.id_usuario]
+        );
+
+        console.log("✅ Usuario reactivado:", res.rows[0]);
+
+        return {
+          delegado: res.rows[0],
+          password,
+          reactivado: true
+        };
+      }
+
+      console.log("❌ Usuario ya existe y está activo");
+      throw new Error("El usuario ya existe y está activo");
     }
 
-    // ❌ YA EXISTE Y ESTÁ ACTIVO
-    throw new Error("El usuario ya existe y está activo");
+    // ======================================
+    // 🆕 CASO: INSERTAR
+    // ======================================
+    console.log("🆕 Insertando nuevo usuario...");
+
+    const res = await pool.query(
+      `INSERT INTO usuarios
+       (nombre, apellido, cedula, correo, telefono, rol, estado, password_hash)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       RETURNING id_usuario, nombre, apellido, cedula, correo, telefono, rol, estado, fecha_registro`,
+      [nombre, apellido, cedula, correo, telefono, rol, estado, password_hash]
+    );
+
+    console.log("✅ Usuario creado:", res.rows[0]);
+
+    return {
+      delegado: res.rows[0],
+      password,
+      reactivado: false
+    };
+
+  } catch (error) {
+    console.error("🔥 ERROR EN SERVICE crearDelegado:", error);
+    throw error;
   }
-
-  // ======================================
-  // 🆕 CASO: NO EXISTE → INSERTAR
-  // ======================================
-  const res = await pool.query(
-    `INSERT INTO usuarios
-     (nombre, apellido, cedula, correo, telefono, rol, estado, password_hash)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-     RETURNING id_usuario, nombre, apellido, cedula, correo, telefono, rol, estado, fecha_registro`,
-    [nombre, apellido, cedula, correo, telefono, rol, estado, password_hash]
-  );
-
-  return {
-    delegado: res.rows[0],
-    password,
-    reactivado: false
-  };
 },
-
   // ===============================
   // ACTUALIZAR DELEGADO
   // ===============================
