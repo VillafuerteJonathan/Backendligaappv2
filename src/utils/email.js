@@ -1,39 +1,41 @@
-export async function sendEmail({ to, subject, text, html }) {
-  if (!process.env.BREVO_API_KEY) {
-    throw new Error("BREVO_API_KEY no configurado");
-  }
+import nodemailer from "nodemailer";
 
-  if (!process.env.BREVO_SENDER_EMAIL) {
-    throw new Error("BREVO_SENDER_EMAIL no configurado");
-  }
+export const sendEmail = async ({ to, subject, text, html }) => {
+  try {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      throw new Error("SMTP no configurado");
+    }
 
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "accept": "application/json",
-      "api-key": process.env.BREVO_API_KEY.trim(),
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({
-      sender: {
-        name: "Liga Deportiva de Picaíhua",
-        email: process.env.BREVO_SENDER_EMAIL
+    console.log("📧 Conectando a SMTP Brevo...");
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: false, // 587 usa STARTTLS
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
-      to: [{ email: to }],
+    });
+
+    // 👉 Verifica conexión (CLAVE para debug)
+    await transporter.verify();
+    console.log("✅ SMTP conectado correctamente");
+
+    const info = await transporter.sendMail({
+      from: `"Liga Deportiva" <${process.env.SMTP_FROM}>`,
+      to,
       subject,
-      textContent: text,
-      htmlContent: html
-    })
-  });
+      text,
+      html,
+    });
 
-  const data = await response.json();
+    console.log("✅ Correo enviado:", info.messageId);
 
-  if (!response.ok) {
-    console.error("❌ Error Brevo:", data);
-    throw new Error(data.message || "Error enviando correo");
+    return info;
+
+  } catch (error) {
+    console.error("❌ Error SMTP:", error);
+    throw error;
   }
-
-  console.log("✅ Brevo OK:", data.messageId);
-
-  return data;
-}
+};
