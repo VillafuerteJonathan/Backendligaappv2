@@ -20,6 +20,9 @@ export const VocalController = {
  // ===============================
 // CREAR VOCAL
 // ===============================
+// ===============================
+// CREAR VOCAL
+// ===============================
 async crear(req, res) {
   console.log("🟡 [CONTROLLER] Iniciando crear vocal");
   console.log("📥 Body:", req.body);
@@ -32,11 +35,12 @@ async crear(req, res) {
     console.log("🔁 Reactivado:", reactivado);
 
     // ======================================
-    // 📧 ENVÍO DE CORREO (BREVO)
+    // 📧 ENVÍO DE CORREO (SMTP)
     // ======================================
     try {
-      if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
-        console.warn("⚠️ Brevo no configurado. No se enviará correo.");
+      // ✅ VALIDAR SMTP (CORRECTO)
+      if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.warn("⚠️ SMTP no configurado. No se enviará correo.");
       } else {
         console.log("📧 Preparando envío de correo...");
 
@@ -72,7 +76,7 @@ Por favor cambia tu contraseña al iniciar sesión.`;
           html
         });
 
-        console.log("✅ Correo enviado (Brevo):", result.messageId);
+        console.log("✅ Correo enviado:", result.messageId);
       }
 
     } catch (emailError) {
