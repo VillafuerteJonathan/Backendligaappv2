@@ -25,7 +25,6 @@ export const VocalController = {
 // ===============================
 async crear(req, res) {
   console.log("🟡 [CONTROLLER] Iniciando crear vocal");
-  console.log("📥 Body:", req.body);
 
   try {
     const { vocal, password, reactivado } =
@@ -35,12 +34,11 @@ async crear(req, res) {
     console.log("🔁 Reactivado:", reactivado);
 
     // ======================================
-    // 📧 ENVÍO DE CORREO (SMTP)
+    // 📧 ENVÍO DE CORREO (BREVO API)
     // ======================================
     try {
-      // ✅ VALIDAR SMTP (CORRECTO)
-      if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.warn("⚠️ SMTP no configurado. No se enviará correo.");
+      if (!process.env.BREVO_API_KEY) {
+        console.warn("⚠️ BREVO_API_KEY no configurada");
       } else {
         console.log("📧 Preparando envío de correo...");
 
@@ -49,6 +47,8 @@ async crear(req, res) {
           : "Cuenta de Vocal - Liga Deportiva de Picaíhua";
 
         const text = `Hola ${vocal.nombre},
+
+${reactivado ? "Tu cuenta ha sido reactivada." : "Tu cuenta de vocal ha sido creada."}
 
 Usuario: ${vocal.correo}
 Contraseña: ${password}
@@ -73,14 +73,16 @@ Por favor cambia tu contraseña al iniciar sesión.`;
           to: vocal.correo,
           subject,
           text,
-          html
+          html,
         });
 
-        console.log("✅ Correo enviado:", result.messageId);
+        console.log("✅ Correo enviado:", result);
       }
-
     } catch (emailError) {
-      console.error("❌ Error enviando correo:", emailError.message);
+      console.error(
+        "❌ Error real enviando correo:",
+        emailError.response?.body || emailError.message
+      );
     }
 
     // ======================================
@@ -89,25 +91,26 @@ Por favor cambia tu contraseña al iniciar sesión.`;
     res.status(201).json({
       success: true,
       data: vocal,
-      reactivado
+      reactivado,
     });
 
   } catch (err) {
     console.error("🔥 Error al crear vocal:", err);
 
-    if (err.code === '23505') {
+    if (err.code === "23505") {
       return res.status(409).json({
         success: false,
-        message: 'La cédula o el correo ya están registrados'
+        message: "La cédula o el correo ya están registrados",
       });
     }
 
     res.status(400).json({
       success: false,
-      message: err.message || 'Error al crear vocal'
+      message: err.message || "Error al crear vocal",
     });
   }
 },
+
 
   // ===============================
   // ACTUALIZAR, HABILITAR, DESHABILITAR, ELIMINAR

@@ -1,41 +1,34 @@
-import nodemailer from "nodemailer";
-
-export const sendEmail = async ({ to, subject, text, html }) => {
+export async function sendEmail({ to, subject, text, html }) {
   try {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      throw new Error("SMTP no configurado");
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "api-key": process.env.BREVO_API_KEY?.trim(),
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "Liga Deportiva de Picaíhua",
+          email: process.env.BREVO_SENDER_EMAIL
+        },
+        to: [{ email: to }],
+        subject: subject,
+        textContent: text || "",
+        htmlContent: html || ""
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Error enviando correo");
     }
 
-    console.log("📧 Conectando a SMTP Brevo...");
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: false, // 587 usa STARTTLS
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    // 👉 Verifica conexión (CLAVE para debug)
-    await transporter.verify();
-    console.log("✅ SMTP conectado correctamente");
-
-    const info = await transporter.sendMail({
-      from: `"Liga Deportiva" <${process.env.SMTP_FROM}>`,
-      to,
-      subject,
-      text,
-      html,
-    });
-
-    console.log("✅ Correo enviado:", info.messageId);
-
-    return info;
+    return data;
 
   } catch (error) {
-    console.error("❌ Error SMTP:", error);
+    console.error("❌ Error enviando correo:", error.message);
     throw error;
   }
-};
+}
