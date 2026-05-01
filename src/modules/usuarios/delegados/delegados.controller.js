@@ -20,104 +20,89 @@ export const DelegadosController = {
  // ===============================
 // CREAR DELEGADO
 // ===============================
+// ===============================
+// CREAR DELEGADO
+// ===============================
 async crear(req, res) {
   console.log("🟡 [CONTROLLER] Iniciando crear delegado");
-  console.log("📥 Body recibido:", req.body);
 
   try {
-    const { delegado, password, reactivado } = await DelegadosService.crearDelegado(req.body);
+    const { delegado, password, reactivado } =
+      await DelegadosService.crearDelegado(req.body);
 
-    console.log("✅ [CONTROLLER] Delegado creado:", delegado);
-    console.log("🔐 Password generada:", password);
-    console.log("🔁 ¿Reactivado?:", reactivado);
+    console.log("✅ Delegado creado:", delegado);
+    console.log("🔁 Reactivado:", reactivado);
 
     // ======================================
-    // 📧 ENVÍO DE CORREO
+    // 📧 ENVÍO DE CORREO (BREVO)
     // ======================================
     try {
-      console.log("📧 Preparando envío de correo...");
+      // 🚨 Validar config de Brevo
+      if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
+        console.warn("⚠️ Brevo no configurado. No se enviará correo.");
+      } else {
+        console.log("📧 Preparando envío de correo...");
 
-      const subject = reactivado
-        ? 'Cuenta Reactivada - Delegado - Liga Deportiva de Picaíhua'
-        : 'Cuenta de Delegado - Liga Deportiva de Picaíhua';
+        const subject = reactivado
+          ? "Cuenta Reactivada - Liga Deportiva de Picaíhua"
+          : "Cuenta de Delegado - Liga Deportiva de Picaíhua";
 
-      const text = reactivado
-        ? `Hola ${delegado.nombre},
-
-Tu cuenta ha sido reactivada.
-
-Usuario: ${delegado.correo}
-Nueva contraseña: ${password}
-
-Por favor cambia tu contraseña al iniciar sesión.`
-        : `Hola ${delegado.nombre},
-
-Tu cuenta de delegado ha sido creada.
+        const text = `Hola ${delegado.nombre},
 
 Usuario: ${delegado.correo}
-Contraseña temporal: ${password}
+Contraseña: ${password}
 
 Por favor cambia tu contraseña al iniciar sesión.`;
 
-      const html = `
-        <h3>Hola ${delegado.nombre}</h3>
-        <p>${reactivado 
-          ? 'Tu cuenta ha sido <b>reactivada</b>' 
-          : 'Tu cuenta de <b>delegado</b> ha sido creada'}</p>
-        <p><b>Usuario:</b> ${delegado.correo}</p>
-        <p><b>Contraseña:</b> ${password}</p>
-        <p>⚠️ Por seguridad, cambia tu contraseña al iniciar sesión.</p>
-      `;
+        const html = `
+          <h3>Hola ${delegado.nombre}</h3>
+          <p>${
+            reactivado
+              ? "Tu cuenta ha sido <b>reactivada</b>"
+              : "Tu cuenta de <b>delegado</b> ha sido creada"
+          }</p>
+          <p><b>Usuario:</b> ${delegado.correo}</p>
+          <p><b>Contraseña:</b> ${password}</p>
+          <p>⚠️ Por seguridad, cambia tu contraseña al iniciar sesión.</p>
+        `;
 
-      console.log("📨 Datos del correo:");
-      console.log("➡️ Para:", delegado.correo);
-      console.log("➡️ Asunto:", subject);
+        console.log("📨 Enviando a:", delegado.correo);
 
-      console.log("🌐 Variables de entorno:");
-      console.log("EMAIL_USER:", process.env.EMAIL_USER);
-      console.log("EMAIL_HOST:", process.env.EMAIL_HOST);
-      console.log("EMAIL_PORT:", process.env.EMAIL_PORT);
+        const result = await sendEmail({
+          to: delegado.correo,
+          subject,
+          text,
+          html,
+        });
 
-      console.log("🚀 Enviando correo...");
-
-      const result = await sendEmail({
-        to: delegado.correo,
-        subject,
-        text,
-        html
-      });
-
-      console.log("✅ Correo enviado correctamente:", result);
-
+        console.log("✅ Correo enviado (Brevo):", result.messageId);
+      }
     } catch (emailError) {
-      console.error("❌ [CONTROLLER] Error enviando correo:");
-      console.error("Mensaje:", emailError.message);
-      console.error("Stack:", emailError.stack);
+      console.error("❌ Error enviando correo:", emailError.message);
     }
 
     // ======================================
-    // ✅ RESPUESTA
+    // RESPUESTA
     // ======================================
     res.status(201).json({
       success: true,
       data: delegado,
-      reactivado
+      reactivado,
     });
 
   } catch (err) {
-    console.error("🔥 [CONTROLLER] Error general:");
-    console.error(err);
+    console.error("🔥 Error general:", err);
 
-    if (err.code === '23505') {
+    if (err.code === "23505") {
       return res.status(409).json({
         success: false,
-        message: 'La cédula o el correo ya están registrados'
+        message: "La cédula o el correo ya están registrados",
       });
     }
 
     res.status(400).json({
       success: false,
-      message: err.message || 'Error al crear delegado'
+      message: err.message || "Error al crear delegado",
     });
   }
 },
